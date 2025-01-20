@@ -1,0 +1,235 @@
+// Spring Boot Microservices Demo Project Structure and Example Code
+
+// Suggested Project Structure
+//
+// demo-microservices/
+// ├── api-gateway/         // API Gateway Service
+// │   ├── src/main/java/com/example/apigateway
+// │   │   └── ApiGatewayApplication.java
+// │   └── pom.xml
+// ├── discovery-server/    // Eureka Discovery Server
+// │   ├── src/main/java/com/example/discoveryserver
+// │   │   └── DiscoveryServerApplication.java
+// │   └── pom.xml
+// ├── user-service/        // User Service
+// │   ├── src/main/java/com/example/userservice
+// │   │   ├── UserController.java
+// │   │   ├── UserService.java
+// │   │   ├── User.java
+// │   │   └── UserRepository.java
+// │   └── pom.xml
+// ├── order-service/       // Order Service
+// │   ├── src/main/java/com/example/orderservice
+// │   │   ├── OrderController.java
+// │   │   ├── OrderService.java
+// │   │   ├── Order.java
+// │   │   └── OrderRepository.java
+// │   └── pom.xml
+// ├── config-server/       // Centralized Configuration Server
+// │   ├── src/main/java/com/example/configserver
+// │   │   └── ConfigServerApplication.java
+// │   └── pom.xml
+// ├── card-validation-service/ // Card Validation Service
+// │   ├── src/main/java/com/example/cardvalidationservice
+// │   │   ├── CardValidationController.java
+// │   │   ├── CardValidationService.java
+// │   │   ├── CardDetails.java
+// │   │   └── CardDetailsRepository.java
+// │   └── pom.xml
+// ├── payment-service/     // Payment Service
+// │   ├── src/main/java/com/example/paymentservice
+// │   │   ├── PaymentController.java
+// │   │   ├── PaymentService.java
+// │   │   ├── Payment.java
+// │   │   └── PaymentRepository.java
+// │   └── pom.xml
+// └── pom.xml              // Parent POM for the multi-module project
+
+// Parent POM.xml example
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>demo-microservices</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>api-gateway</module>
+        <module>discovery-server</module>
+        <module>user-service</module>
+        <module>order-service</module>
+        <module>config-server</module>
+        <module>card-validation-service</module>
+        <module>payment-service</module>
+    </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+
+// Example Code for Discovery Server
+// DiscoveryServerApplication.java
+package com.example.discoveryserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class DiscoveryServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DiscoveryServerApplication.class, args);
+    }
+}
+
+// application.yml
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: false
+
+// Example Code for User Service
+// User.java
+package com.example.userservice.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
+    private String password;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+// UserController.java
+package com.example.userservice.controller;
+
+import com.example.userservice.model.User;
+import com.example.userservice.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @PostMapping
+    public User createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
+}
+
+// UserService.java
+package com.example.userservice.service;
+
+import com.example.userservice.model.User;
+import com.example.userservice.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+}
+
+// UserRepository.java
+package com.example.userservice.repository;
+
+import com.example.userservice.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+}
+
+// application.yml
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+// Let me know which other microservices you'd like me to implement next.
